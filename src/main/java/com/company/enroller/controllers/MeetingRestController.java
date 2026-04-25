@@ -45,7 +45,7 @@ public class MeetingRestController {
     }
 
     @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<?> deleteMeeting(@PathVariable("id") Long id) {
+    public ResponseEntity<?> deleteMeeting(@PathVariable("id") Long id, @RequestBody Meeting meeting) {
         Meeting findMeeting = meetingService.findById(id);
         if (findMeeting == null) {
             return new ResponseEntity(HttpStatus.NOT_FOUND);

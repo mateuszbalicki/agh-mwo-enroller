@@ -3,6 +3,7 @@ package com.company.enroller.persistence;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.hibernate.Transaction;
@@ -25,6 +26,12 @@ public class ParticipantService {
 		Query query = connector.getSession().createQuery(hql);
 		return query.list();
 	}
+
+    public Collection<Participant> getAll(Optional<String> orderBy, Optional<String> sort) {
+        String hql = "FROM Participant";
+        Query query = connector.getSession().createQuery(hql);
+        return query.list();
+    }
 
     public Participant findByLogin(String login) {
         String hql = "FROM Participant WHERE login = :login";
@@ -52,15 +59,11 @@ public class ParticipantService {
     }
 
     public Collection<Participant> sort(String sortBy, String sortOrder) {
+        String hql = "FROM Participant ORDER BY " + sortBy + " " + sortOrder;
+        Query query = connector.getSession().createQuery(hql);
+        query.setParameter("sortBy", sortBy);
+        query.setParameter("sortOrder", sortOrder);
+        return query.list();
 
-//        if (sortOrder.equals("DESC")) {
-//            return getAll().stream()
-//                    .sorted(Comparator.reverseOrder())
-//                    .collect(Collectors.toList());
-//        }
-//        return getAll().stream()
-//                .sorted()
-//                .collect(Collectors.toList());
-        return getAll();
     }
 }

@@ -18,7 +18,7 @@ public class MeetingService {
 	}
 
 	public Collection<Meeting> getAll() {
-		String hql = "FROM Meeting";
+		String hql = "FROM meeting_participiant";
 		Query query = connector.getSession().createQuery(hql);
 		return query.list();
 	}

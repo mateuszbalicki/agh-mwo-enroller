@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import com.company.enroller.model.Participant;
@@ -17,10 +18,14 @@ public class ParticipantRestController {
 
 	@Autowired
 	ParticipantService participantService;
+    @Autowired
+    PasswordEncoder passwordEncoder;
 
     @RequestMapping(value = "", method = RequestMethod.GET)
-    public ResponseEntity<?> getParticipants() {
-        Collection<Participant> participants = participantService.getAll();
+    public ResponseEntity<?> getParticipants(@RequestParam (value = "sortBy", defaultValue = "") String sortBy,
+                                             @RequestParam (value = "sortOrder",  defaultValue = "") String sortOrder,
+                                             @RequestParam (value = "key", defaultValue = "") String key) {
+        Collection<Participant> participants = participantService.getAll(sortBy, sortOrder, key);
 
         return new ResponseEntity<Collection<Participant>>(participants, HttpStatus.OK);
     }
@@ -38,32 +43,38 @@ public class ParticipantRestController {
     public ResponseEntity<?> registerParticipant(@RequestBody Participant participant) {
         Participant findParticipant = participantService.findByLogin(participant.getLogin());
         if (findParticipant != null) {
-            return new ResponseEntity("Already Exists", HttpStatus.CONFLICT);
+            return new ResponseEntity("Unable to create. A participant with login " + participant.getLogin() + " already exist.", HttpStatus.CONFLICT);
         }
+
+        String hashedPassword = passwordEncoder.encode(participant.getPassword());
+        participant.setPassword(hashedPassword);
 
         participantService.add(participant);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
-    @RequestMapping(value = "", method = RequestMethod.DELETE)
-    public ResponseEntity<?> deleteParticipant(@RequestBody Participant participant) {
-        Participant findParticipant = participantService.findByLogin(participant.getLogin());
-        if (findParticipant == null) {
+    @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
+    public ResponseEntity<?> deleteParticipant(@PathVariable("id") String login) {
+        Participant participant = participantService.findByLogin(login);
+        if (participant == null) {
             return new ResponseEntity(HttpStatus.NOT_FOUND);
         }
-        participantService.delete(findParticipant);
-        return new ResponseEntity<>(HttpStatus.OK);
+        participantService.delete(participant);
+        return new ResponseEntity<>("Participant " + login + " deleted successfully.", HttpStatus.OK);
     }
 
-    @RequestMapping(value = "", method = RequestMethod.PUT)
+    @RequestMapping(value = "/{id}", method = RequestMethod.PUT)
     public ResponseEntity<?> updateParticipant(@PathVariable("id") String login, @RequestBody Participant participant) {
         Participant findParticipant = participantService.findByLogin(login);
         if (findParticipant == null) {
-            return new ResponseEntity(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        findParticipant.setPassword(participant.getPassword());
+
+        String hashedNewPassword = passwordEncoder.encode(participant.getPassword());
+        findParticipant.setPassword(hashedNewPassword);
+
         participantService.update(findParticipant);
-        return new ResponseEntity<>("Login credencials updated", HttpStatus.OK);
+        return new ResponseEntity<>("Login credentials updated", HttpStatus.OK);
     }
 
 }
